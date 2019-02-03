@@ -1,0 +1,70 @@
+model new
+call 'Imported_Mesh.txt'
+model configure fluid
+threads 100
+model domain extent -1.0 1.0 -1.0 1.0 -2 0 condition destroy
+model largestrain on
+model mechanical timestep scale
+model configure cfd
+model fluid slave
+wall generate cylinder axis (0,0,1.0) base (0,0,-2.0) height 2.0 radius 0.122 cap false false resolu 0.1
+wall generate cylinder axis (0,0,1.0) base (0,0,-2) height 2.0 radius 0.5 cap false false resolu 0.1
+wall-zone create range group 'Reservoir'
+ball distribute box -0.5 0.5 -0.5 0.5 -2.0 0.0 porosity 0.3 radius 0.001 0.01 ...
+range cylinder end-1 (0,0,-2.0) end-2 (0,0,0) radius 0.122 0.5 
+ball cfd group 'Sanding_Zone' range cylinder end-1 (0,0,-2.0) end-2 (0,0,0) radius 0.122 0.5
+ball cfd attribute porosity 0.15
+ball attribute density 2840 damp 0.5
+model cmat default type 'ball-ball' model linearpbond method bond gap 2.5e-6 ...
+property kn 1e8 ks 1e8 fric 0.2 dp_nratio 0.75 pb_ten 2.7e6 pb_coh 3.723e6 pb_fa 30.4 proximity 2.5e-4  
+model cmat default model linearpbond method deformability emod 1e8 kratio 1.0 property kn 1e8 ks 1e8 fric 0.2 proximity 2.5e-4
+model cmat apply
+contact method bond gap 2.5e-6 range contact type 'ball-ball'
+contact property lin_mode 1 lin_force 0 0 0 pb_ten 2.7e6 pb_coh 3.723e6 pb_fa 30.4
+ball fix velocity-x
+ball fix velocity-y
+ball fix velocity-z
+zone cmodel assign mohr-coulomb ran grou 'Reservoir'
+zone property density 2840 bulk 6.2556e9 cohesion 3.723e6 friction 30.4 shear 4.6917e9 tension 2.7e6 ran grou 'Reservoir'
+zone cmodel assign elastic ran grou 'Casing'
+zone property density 7850 young 2.1e5 poisson 0.3 ran grou 'Casing'
+zone fluid cmodel assign isotropic
+zone fluid property permeability 4.905e-10
+zone fluid property porosity 0.15
+zone initialize fluid-density 840.0
+zone face apply stress-zz -69e6 range position-z 0.1 -0.1
+zone initialize stress-zz -69e6 gradient 0 0 2.84e4
+zone initialize stress-xx -48.3e6 gradient 0 0 1.988e4
+zone initialize stress-yy -55.2e6 gradient 0 0 2.272e4
+zone gridpoint fix velocity-x range position-x -1.26 -1.24
+zone gridpoint fix velocity-x range position-x 1.24 1.26
+zone gridpoint fix velocity-y range position-y -1.26 -1.24
+zone gridpoint fix velocity-y range position-y 1.24 1.26
+zone gridpoint fix velocity-z range position-z -2.01 -1.99
+zone gridpoint fix velocity-z range position-z -0.01 0.01
+model gravity 0 0 -9.81
+zone gridpoint initialize displacement-x 0
+zone gridpoint initialize displacement-y 0
+zone gridpoint initialize displacement-z 0
+zone gridpoint initialize velocity-x 0
+zone gridpoint initialize velocity-y 0
+zone gridpoint initialize velocity-z 0
+zone gridpoint initialize velocity-x 0 ran grou 'Casing'
+zone gridpoint initialize velocity-y 0 ran grou 'Casing'
+zone gridpoint initialize velocity-z 0 ran grou 'Casing'
+zone gridpoint fix velocity-x ran grou 'Casing'
+zone gridpoint fix velocity-x ran grou 'Casing'
+zone gridpoint fix velocity-y ran grou 'Casing'
+zone gridpoint fix velocity-y ran grou 'Casing'
+zone gridpoint fix velocity-z ran grou 'Casing'
+zone gridpoint fix velocity-z ran grou 'Casing'
+zone gridpoint initialize displacement-x 0 ran grou 'Casing'
+zone gridpoint initialize displacement-y 0 ran grou 'Casing'
+zone gridpoint initialize displacement-z 0 ran grou 'Casing'
+zone gridpoint initialize velocity-x 0 ran grou 'Casing'
+zone gridpoint initialize velocity-y 0 ran grou 'Casing'
+zone gridpoint initialize velocity-z 0 ran grou 'Casing'
+zone fluid biot off
+model fluid active off
+model history mechanical unbalanced-maximum
+model cycl 1000
